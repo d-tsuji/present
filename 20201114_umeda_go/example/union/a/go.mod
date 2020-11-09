@@ -1,0 +1,1 @@
+module "github.com/d-tsuji/go-sandbox/slide/jsonsample/union/a"

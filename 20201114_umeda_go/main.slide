@@ -1,0 +1,185 @@
+Introduction to JSON handling in Go
+2020/11/14 umeda.go
+
+Tags: golang, json
+
+辻 大志郎
+フューチャー株式会社
+@d_tutuz
+
+* About me
+*辻大志郎*
+
+- 2013/04 渋谷区役所
+- 2014/10 フューチャー株式会社
+
+バックエンド(Go, Java)とインフラ(AWS)
+その他、競技プログラミングなど
+
+* 目次
+
+- デコード時にはまりやすいポイント
+- エンコード時にはまりやすいポイント
+- JSONからのGoの構造体を便利につくる
+- JSONの構造体が一部のフィールドによって動的に変わる場合の扱い方
+- 構造体の埋め込みを使った共通項目のエンコード
+
+* デコード時にはまりやすいポイント
+
+* 値が空になる
+
+最もよくあるミスの一つ
+
+.code example/export/wrong/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
+
+.play example/export/wrong/main.go /json-main OMIT/,/json-main OMIT/
+
+* 1.フィールド名が非公開で値が取得できない
+これは誤り。フィールド名はExportする必要があります
+
+.code example/export/wrong/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
+
+正しくは以下のようになります。
+
+.play example/export/ok/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
+
+JSONのデコード自体はエラーにならないため、最初は気づきにくいかも...
+
+* 2.なんでも map[string]interface{} で受けちゃう
+もちろんデコードできるけど、フィールドにアクセスするときに大変...
+
+.play example/interface/wrong/main.go /json-main OMIT/,/json-main OMIT/
+
+* 型アサーションの嵐になります
+
+- 値を取り出そうとすると型アサーションを多用するために...
+- ※JSONデコード時に `interface{}` でJSON数値をデコードすると `float64` 型
+
+.play example/interface/wrong2/main.go /json-main OMIT/,/json-main OMIT/
+
+* 素直にJSONの構造にあった構造体を作りましょう
+
+JSONの構造にあった構造体を使う
+
+.code example/interface/ok/main.go /json-struct OMIT/,/json-struct OMIT/
+
+.play example/interface/ok/main.go /json-main OMIT/,/json-main OMIT/
+
+* エンコード時にはまりやすいポイント
+
+* 1.nilスライスはnullになる
+
+以下のような構造体でJSONにエンコードすることを考えてみます
+
+.code example/nilslice/wrong/main.go /json-struct OMIT/,/json-struct OMIT/
+
+実行すると...
+
+.play example/nilslice/wrong/main.go /json-main OMIT/,/json-main OMIT/
+
+* nilスライスと空スライスの違い
+
+- JSONエンコード時はnilスライスと空スライスの違いに気をつけましょう
+
+.code example/nilslice/sample/sample.go /empty OMIT/,/empty OMIT/
+
+- `append` するときはnilスライスもよく使うので、うっかりしやすい
+
+.play example/nilslice/ok/main.go /json-main OMIT/,/json-main OMIT/
+
+* 2.`omitempty` で不要なフィールドを表示しない
+
+- オプショナルなフィールドなど、ゼロ値の場合はJSONのフィールドに表示したくないときに有効
+- 構造体のタグに `,omitempty` を付与する
+
+.code example/omitempty/main.go /optional-struct OMIT/,/optional-struct OMIT/
+
+構造体の値がゼロ値の場合はJSONのフィールドにあらわれない
+
+.play example/omitempty/main.go /json-main OMIT/,/json-main OMIT/
+
+* 3.`-` でエンコード対象から除外
+
+- `chan`, `complex`, `function` 型の場合、エンコードはできない
+
+.code example/illegal/ng/main.go /optional-struct OMIT/,/optional-struct OMIT/
+
+- `json: unsupported type: func()` のようなエラーになります
+
+.play example/illegal/ng/main.go /json-main OMIT/,/json-main OMIT/
+
+* 構造体のタグに `"-"` を付与することでエンコード対象から除外できる
+
+- `Fn` フィールドはエンコードの対象外
+
+.code example/illegal/ok/main.go /optional-struct OMIT/,/optional-struct OMIT/
+
+.play example/illegal/ok/main.go /json-main OMIT/,/json-main OMIT/
+
+* JSONからのGoの構造体を便利につくる
+
+* JSONからGoの構造体を作るのがめんどくさい...
+
+- https://httpbin.org/get の結果の構造体を作る
+
+.code example/json2go/sample.json
+
+* JSON-to-Go を使おう
+
+- [[https://mholt.github.io/json-to-go/][JSON-to-Go]]
+- JSONをInputにGoの構造体を自動生成できる
+- JSONはサーバに送信されないため安心
+
+.image image/json2go.png 400 600
+
+* JSONの構造体が一部のフィールドによって動的に変わる場合
+
+* typeフィールドなどでJSONの構造が変わる
+
+- 例えば以下のような `"type"` によって2つの構造を持つJSONを扱う場合
+- `"result"` の値が変化する
+
+.code example/union/date.json
+
+.code example/union/id.json
+
+* `json.RawMessage` でデコードを遅延するテクニック(1/2)
+
+- もちろんそれぞれのJSONにフィットする構造体を複数実装してもよいが、冗長
+- 構造が決まるまで `json.RawMessage` としてデコードを遅延するテクニックがあります
+
+.code example/union/a/main.go /json-struct OMIT/,/json-struct OMIT/
+
+JSONのInputは `"type":"1"` でこんな感じだとすると...
+
+.code example/union/a/main.go /json-input OMIT/,/json-input OMIT/
+
+* `json.RawMessage` でデコードを遅延するテクニック(2/2)
+
+- `json.Unmarshal` は複数回実施します
+
+.play example/union/a/main.go /json-main OMIT/,/json-main OMIT/
+
+* 構造体の埋め込みを使った共通項目のエンコード
+
+* システム項目など一部の共通的な項目を使いまわしたい(1/2)
+
+- 構造体を埋め込むと便利
+
+.code example/embedded/main.go /json-struct OMIT/,/json-struct OMIT/
+
+* システム項目など一部の共通的な項目を使いまわしたい(2/2)
+
+- エンコード時は単に埋め込むだけでOK
+- JSONはフラットな階層としてエンコードされます
+
+.play example/embedded/main.go /json-main OMIT/,/json-main OMIT/
+
+* その他
+
+* その他のJSONテクニック
+
+- デコード(エンコード)時に `json.Unmarshal` or `json.NewDecoder` のどちらを使う？
+- `UnmarshalJSON` や `MarshalJSON` を使ったJSONエンコード/デコードの拡張
+- デコード時に未知のフィールドがある場合にエラーにする
+- などなど
