@@ -32,7 +32,7 @@ Tags: golang, json
 
 .code example/export/wrong/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
 
-.play example/export/wrong/main.go /json-main OMIT/,/json-main OMIT/
+.code example/export/wrong/main.go /json-main OMIT/,/json-main OMIT/
 
 * 1.フィールド名が非公開で値が取得できない
 これは誤り。フィールド名はExportする必要があります
@@ -41,7 +41,7 @@ Tags: golang, json
 
 正しくは以下のようになります。
 
-.play example/export/ok/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
+.code example/export/ok/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
 
 JSONのデコード自体はエラーにならないため、最初は気づきにくいかも...
 
@@ -124,11 +124,15 @@ JSONの構造にあった構造体を使う
 
 .code example/json2go/sample.json
 
+* 簡単に作れます
+
+.code example/json2go/auto_generated.go /json-gen OMIT/,/json-gen OMIT/
+
 * JSON-to-Go を使おう
 
 - [[https://mholt.github.io/json-to-go/][JSON-to-Go]]
 - JSONをInputにGoの構造体を自動生成できる
-- JSONはサーバに送信されないため安心
+- JSONはサーバに送信されないため安心(JavaScript 100%)
 
 .image image/json2go.png 400 600
 
@@ -177,9 +181,10 @@ JSONのInputは `"type":"1"` でこんな感じだとすると...
 
 * その他
 
-* その他のJSONテクニック
+* その他のJSONテクニック/ハマりどころ集
 
 - デコード(エンコード)時に `json.Unmarshal` or `json.NewDecoder` のどちらを使う？
 - `UnmarshalJSON` や `MarshalJSON` を使ったJSONエンコード/デコードの拡張
-- デコード時に未知のフィールドがある場合にエラーにする
+- デコード時に未知のフィールドがある場合にエラーにする方法
+- `time.Time` のゼロ値が `omitempty` されない
 - などなど
