@@ -169,6 +169,7 @@ JSONのInputは `"type":"1"` でこんな感じだとすると...
 * システム項目など一部の共通的な項目を使いまわしたい(1/2)
 
 - 構造体を埋め込むと便利
+- `go-swagger` でYAMLに `allOf` を使ったときの生成コードにも使われています
 
 .code example/embedded/main.go /json-struct OMIT/,/json-struct OMIT/
 
