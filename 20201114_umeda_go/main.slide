@@ -16,13 +16,14 @@ Tags: golang, json
 バックエンド(Go, Java)とインフラ(AWS)
 その他、競技プログラミングなど
 
+Umeda.go 2020 Winter ではお世話になりました！(LTさせていただきました)
+
 * 目次
 
 - デコード時にはまりやすいポイント
 - エンコード時にはまりやすいポイント
 - JSONからのGoの構造体を便利につくる
 - JSONの構造体が一部のフィールドによって動的に変わる場合の扱い方
-- 構造体の埋め込みを使った共通項目のエンコード
 
 * デコード時にはまりやすいポイント
 
@@ -32,7 +33,7 @@ Tags: golang, json
 
 .code example/export/wrong/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
 
-.code example/export/wrong/main.go /json-main OMIT/,/json-main OMIT/
+.play example/export/wrong/main.go /json-main OMIT/,/json-main OMIT/
 
 * 1.フィールド名が非公開で値が取得できない
 これは誤り。フィールド名はExportする必要があります
@@ -41,7 +42,7 @@ Tags: golang, json
 
 正しくは以下のようになります。
 
-.code example/export/ok/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
+.play example/export/ok/main.go /json-struct-ip OMIT/,/json-struct-ip OMIT/
 
 JSONのデコード自体はエラーにならないため、最初は気づきにくいかも...
 
@@ -98,29 +99,11 @@ JSONの構造にあった構造体を使う
 
 .play example/omitempty/main.go /json-main OMIT/,/json-main OMIT/
 
-* 3.`-` でエンコード対象から除外
-
-- `chan`, `complex`, `function` 型の場合、エンコードはできない
-
-.code example/illegal/ng/main.go /optional-struct OMIT/,/optional-struct OMIT/
-
-- `json: unsupported type: func()` のようなエラーになります
-
-.play example/illegal/ng/main.go /json-main OMIT/,/json-main OMIT/
-
-* 構造体のタグに `"-"` を付与することでエンコード対象から除外できる
-
-- `Fn` フィールドはエンコードの対象外
-
-.code example/illegal/ok/main.go /optional-struct OMIT/,/optional-struct OMIT/
-
-.play example/illegal/ok/main.go /json-main OMIT/,/json-main OMIT/
-
-* JSONからのGoの構造体を便利につくる
+* JSONからGoの構造体を便利につくる
 
 * JSONからGoの構造体を作るのがめんどくさい...
 
-- https://httpbin.org/get の結果の構造体を作る
+- https://httpbin.org/get から取得できるJSONからGoの構造体を作る
 
 .code example/json2go/sample.json
 
@@ -141,16 +124,17 @@ JSONの構造にあった構造体を使う
 * typeフィールドなどでJSONの構造が変わる
 
 - 例えば以下のような `"type"` によって2つの構造を持つJSONを扱う場合
-- `"result"` の値が変化する
+- `"type"` の値によって `"result"` の構造が変化する
 
 .code example/union/date.json
 
 .code example/union/id.json
 
-* `json.RawMessage` でデコードを遅延するテクニック(1/2)
+* json.RawMessage でデコードを遅延するテクニック(1/2)
 
-- もちろんそれぞれのJSONにフィットする構造体を複数実装してもよいが、冗長
-- 構造が決まるまで `json.RawMessage` としてデコードを遅延するテクニックがあります
+- 構造が決まるまで `json.RawMessage` としてデコードを遅延
+- `json.RawMessage` は `[]byte` への defined type
+- 構造が決まるタイミングで再度デコード
 
 .code example/union/a/main.go /json-struct OMIT/,/json-struct OMIT/
 
@@ -163,6 +147,32 @@ JSONのInputは `"type":"1"` でこんな感じだとすると...
 - `json.Unmarshal` は複数回実施します
 
 .play example/union/a/main.go /json-main OMIT/,/json-main OMIT/
+
+* Fin
+
+.image image/hiking.svg 400 500
+
+_The_Gopher_character_is_based_on_the_Go_mascot_designed_by_ [[http://reneefrench.blogspot.com/][_Renée_French_]].
+
+* Appendix
+
+* `-` でエンコード対象から除外
+
+- `chan`, `complex`, `function` 型の場合、エンコードはできない
+
+.code example/illegal/ng/main.go /optional-struct OMIT/,/optional-struct OMIT/
+
+- `json: unsupported type: func()` のようなエラーになります
+
+.play example/illegal/ng/main.go /json-main OMIT/,/json-main OMIT/
+
+* 構造体のタグに `"-"` を付与することでエンコード対象から除外できる
+
+- `Fn` フィールドはエンコードの対象外
+
+.code example/illegal/ok/main.go /optional-struct OMIT/,/optional-struct OMIT/
+
+.play example/illegal/ok/main.go /json-main OMIT/,/json-main OMIT/
 
 * 構造体の埋め込みを使った共通項目のエンコード
 
@@ -179,8 +189,6 @@ JSONのInputは `"type":"1"` でこんな感じだとすると...
 - JSONはフラットな階層としてエンコードされます
 
 .play example/embedded/main.go /json-main OMIT/,/json-main OMIT/
-
-* その他
 
 * その他のJSONテクニック/ハマりどころ集
 
