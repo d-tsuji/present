@@ -115,9 +115,10 @@ JSONの構造にあった構造体を使う
 
 - [[https://mholt.github.io/json-to-go/][JSON-to-Go]]
 - JSONをInputにGoの構造体を自動生成できる
-- JSONはサーバに送信されないため安心(JavaScript 100%)
+- JSONはサーバに送信されないため安心
+- `git`clone` してCLIでも動かせます
 
-.image image/json2go.png 400 600
+.image image/json2go.png 350 500
 
 * JSONの構造体が一部のフィールドによって動的に変わる場合
 
