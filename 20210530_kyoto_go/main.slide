@@ -1,0 +1,132 @@
+はじめての静的解析
+2021/05/30 kyoto.go #20
+
+Tags: golang, static-analysis
+
+辻 大志郎
+フューチャー株式会社
+@d_tutuz
+
+* About me
+*辻大志郎*
+
+- 2013/04 渋谷区役所
+- 2014/10 フューチャー株式会社
+
+バックエンド(Go, Java)とインフラ(AWS)
+その他、競技プログラミングなど
+
+* はじめに
+
+* お伝えしたいこと
+- はじめて静的解析のモジュールを作りました！
+
+.image image/repo.png 200 _
+
+- 既存のソースから学ぶことで気軽につくれるかも？
+
+* 静的解析と動的解析
+- 静的解析
+
+コードを *実行せず* に、解析すること
+
+- 動的解析
+
+コードを実行して、解析すること
+
+* 何がしたかったか？
+- AWS LambdaをGoで実装するときのハンドラの型をチェックしたい
+- LambdaをGoで実装するとき
+
+[[https://github.com/aws/aws-lambda-go][aws/aws-lambda-go]] を使う
+
+.code example/lambda/ok/main.go
+
+* ハンドラの有効なシグネチャは決まっている
+- 以下の8つ
+
+https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/golang-handler.html
+
+	func ()
+	func () error
+	func (TIn), error
+	func () (TOut, error)
+	func (context.Context) error
+	func (context.Context, TIn) error
+	func (context.Context) (TOut, error)
+	func (context.Context, TIn) (TOut, error)
+
+* lambda.Startの引数はinterface{}型
+- ハンドラを受け取る関数の引数
+
+	func Start(handler interface{})
+
+- ビルドとしてはなんでも受け取ることが可能
+
+シグネチャが異なる場合、実行時エラーになります
+
+.image image/error.png 300 _
+
+* 静的解析のはじめかた
+
+* 静的解析入門
+- tenntennさんの資料
+
+[[https://tenntenn.dev/ja/analysis/][https://tenntenn.dev/ja/analysis/]]
+
+- Go公式のツール群のソース
+
+[[https://github.com/golang/tools/tree/v0.1.2/go/analysis/passes][https://github.com/golang/tools/tree/v0.1.2/go/analysis/passes]]
+
+* 静的解析の雛形
+- [[https://github.com/gostaticanalysis/skeleton][skeleton]] が便利
+
+	$ skeleton -path="github.com/gostaticanalysis/pkgname"
+	pkgname
+	├── cmd
+	│   └── pkgname
+	│       └── main.go
+	├── go.mod
+	├── pkgname.go
+	├── pkgname_test.go
+	├── plugin
+	│   └── main.go
+	└── testdata
+		└── src
+			└── a
+				├── a.go
+				└── go.mod
+
+- テストがすぐに動く
+
+* Go公式のツール群のソース(golang/tools)
+- unmarshalモジュール(ポインタで渡していないとエラーになる)
+
+- 実装(100行程度、読みやすい)
+	func run(pass *analysis.Pass) (interface{}, error) {
+		switch pass.Pkg.Path() {
+		case "encoding/gob", "encoding/json", "encoding/xml", "encoding/asn1":
+			// These packages know how to use their own APIs.
+			// Sometimes they are testing what happens to incorrect programs.
+			return nil, nil
+		}
+
+		inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+
+		nodeFilter := []ast.Node{
+			(*ast.CallExpr)(nil),
+		}
+		inspect.Preorder(nodeFilter, func(n ast.Node) {
+			call := n.(*ast.CallExpr)
+			fn := typeutil.StaticCallee(pass.TypesInfo, call)
+			if fn == nil {
+				return // not a static call
+			}
+
+* 静的解析でチェックしたいロジックを実装
+- 対象の関数を探索
+- 引数の型チェック
+- 関数型のシグネチャチェック(引数、返り値)
+- Invalidな場合は報告
+
+* Let's try!
