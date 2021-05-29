@@ -35,7 +35,7 @@ Tags: golang, static-analysis
 コードを実行して、解析すること
 
 * 何がしたかったか？
-- AWS LambdaをGoで実装するときのハンドラの型をチェックしたい
+- AWS LambdaをGoで実装するときのハンドラのシグネチャをチェックしたい
 - LambdaをGoで実装するとき
 
 [[https://github.com/aws/aws-lambda-go][aws/aws-lambda-go]] を使う
