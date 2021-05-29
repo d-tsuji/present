@@ -124,6 +124,9 @@ https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/golang-handler.html
 			}
 
 * 静的解析でチェックしたいロジックを実装
+
+- `awslambdahandler` の場合
+
 - 対象の関数を探索
 - 引数の型チェック
 - 関数型のシグネチャチェック(引数、返り値)
